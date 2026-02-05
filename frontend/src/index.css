@@ -1,0 +1,17 @@
+/**
+ * Global styles
+ * MUI handles most styling, this is for minimal global overrides
+ */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+#root {
+  min-height: 100vh;
+}
