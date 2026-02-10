@@ -9,10 +9,17 @@ export type BIQueryType =
   | 'audit_trail'
   | 'unsigned_notes'
   | 'unsigned_notes_count'
+  | 'unsigned_notes_by_practitioner'
   | 'weekly_summary'
+  | 'weekly_summary_by_tenant'
   | 'daily_active_users'
+  | 'monthly_active_users'
+  | 'growth_metrics'
   | 'service_usage_tenant'
-  | 'note_format_usage';
+  | 'service_usage_practitioner'
+  | 'service_usage_patient'
+  | 'note_format_usage'
+  | 'events_by_type';
 
 export type BIQueryRequest = {
   query_type: BIQueryType;

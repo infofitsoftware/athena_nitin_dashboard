@@ -19,6 +19,7 @@ import {
   NoteAdd,
   Assessment,
   TrendingUp,
+  Insights,
   Settings,
   ChevronLeft,
   ChevronRight,
@@ -73,6 +74,12 @@ export default function AppSidebar({ open, onToggle }: AppSidebarProps) {
       icon: <TrendingUp />,
       path: '/weekly-summary',
       description: 'Week-over-week trends',
+    },
+    {
+      text: 'Adoption Analytics',
+      icon: <Insights />,
+      path: '/adoption-analytics',
+      description: 'Growth & retention',
     },
     {
       text: 'Query Analytics',

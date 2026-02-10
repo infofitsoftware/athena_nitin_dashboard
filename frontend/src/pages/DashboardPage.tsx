@@ -252,6 +252,14 @@ export default function DashboardPage() {
                   <Button
                     variant="outlined"
                     fullWidth
+                    onClick={() => navigate('/unsigned-notes')}
+                    color="error"
+                  >
+                    Unsigned Notes
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    fullWidth
                     onClick={() => navigate('/service-usage')}
                   >
                     Service Usage
@@ -262,6 +270,13 @@ export default function DashboardPage() {
                     onClick={() => navigate('/weekly-summary')}
                   >
                     Weekly Summary
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    fullWidth
+                    onClick={() => navigate('/adoption-analytics')}
+                  >
+                    Adoption Analytics
                   </Button>
                 </Box>
               </Paper>

@@ -1,6 +1,6 @@
 import { Box, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Dashboard, Analytics, History, NoteAdd, Assessment, TrendingUp, Settings } from '@mui/icons-material';
+import { Dashboard, Analytics, History, NoteAdd, Assessment, TrendingUp, Insights } from '@mui/icons-material';
 import { useAuthStore } from '../../store/authStore';
 
 const drawerWidth = 240;
@@ -25,6 +25,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
     { text: 'Unsigned Notes', icon: <NoteAdd />, path: '/unsigned-notes' },
     { text: 'Service Usage', icon: <Assessment />, path: '/service-usage' },
     { text: 'Weekly Summary', icon: <TrendingUp />, path: '/weekly-summary' },
+    { text: 'Adoption Analytics', icon: <Insights />, path: '/adoption-analytics' },
     { text: 'Query Analytics', icon: <Analytics />, path: '/analytics' },
   ];
 

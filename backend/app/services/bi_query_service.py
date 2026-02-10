@@ -35,7 +35,7 @@ class BIQueryService:
             query_template: Query template from bi_queries
             start_date: Start date (YYYY-MM-DD or YYYY-MM-DD HH:MM:SS)
             end_date: End date (YYYY-MM-DD or YYYY-MM-DD HH:MM:SS)
-            tenant_id: Tenant ID filter
+            tenant_id: Tenant ID filter (optional for most queries)
             user_id: User ID filter
             limit: Result limit
             **kwargs: Additional parameters for query
@@ -102,6 +102,10 @@ class BIQueryService:
             # If parsing fails, return as-is
             return date_str
     
+    # ========================================================================
+    # OVERVIEW / DASHBOARD QUERIES
+    # ========================================================================
+    
     def get_total_sessions(
         self,
         start_date: str | None = None,
@@ -164,6 +168,10 @@ class BIQueryService:
             tenant_id=tenant_id
         )
     
+    # ========================================================================
+    # AUDIT TRAIL QUERIES
+    # ========================================================================
+    
     def get_audit_trail(
         self,
         tenant_id: str | None = None,
@@ -182,9 +190,13 @@ class BIQueryService:
             limit=limit
         )
     
+    # ========================================================================
+    # UNSIGNED NOTES QUERIES
+    # ========================================================================
+    
     def get_unsigned_notes(
         self,
-        tenant_id: str,
+        tenant_id: str | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
         limit: int = 1000
@@ -200,7 +212,7 @@ class BIQueryService:
     
     def get_unsigned_notes_count(
         self,
-        tenant_id: str,
+        tenant_id: str | None = None,
         start_date: str | None = None,
         end_date: str | None = None
     ) -> str:
@@ -212,37 +224,29 @@ class BIQueryService:
             tenant_id=tenant_id
         )
     
-    def get_weekly_summary(
+    def get_unsigned_notes_by_practitioner(
         self,
-        tenant_id: str,
+        tenant_id: str | None = None,
         start_date: str | None = None,
-        end_date: str | None = None
+        end_date: str | None = None,
+        limit: int = 50
     ) -> str:
-        """Get query for weekly summary"""
+        """Get query for unsigned notes grouped by practitioner"""
         return self.build_query(
-            bi_queries.QUERY_WEEKLY_SUMMARY,
+            bi_queries.QUERY_UNSIGNED_NOTES_BY_PRACTITIONER,
             start_date=start_date,
             end_date=end_date,
-            tenant_id=tenant_id
+            tenant_id=tenant_id,
+            limit=limit
         )
     
-    def get_daily_active_users(
-        self,
-        tenant_id: str,
-        start_date: str | None = None,
-        end_date: str | None = None
-    ) -> str:
-        """Get query for daily active users"""
-        return self.build_query(
-            bi_queries.QUERY_DAILY_ACTIVE_USERS,
-            start_date=start_date,
-            end_date=end_date,
-            tenant_id=tenant_id
-        )
+    # ========================================================================
+    # SERVICE USAGE QUERIES
+    # ========================================================================
     
     def get_service_usage_by_tenant(
         self,
-        tenant_id: str,
+        tenant_id: str | None = None,
         start_date: str | None = None,
         end_date: str | None = None
     ) -> str:
@@ -254,15 +258,143 @@ class BIQueryService:
             tenant_id=tenant_id
         )
     
+    def get_service_usage_by_practitioner(
+        self,
+        tenant_id: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        limit: int = 100
+    ) -> str:
+        """Get query for service usage by practitioner"""
+        return self.build_query(
+            bi_queries.QUERY_SERVICE_USAGE_BY_PRACTITIONER,
+            start_date=start_date,
+            end_date=end_date,
+            tenant_id=tenant_id,
+            limit=limit
+        )
+    
+    def get_service_usage_by_patient(
+        self,
+        tenant_id: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        limit: int = 100
+    ) -> str:
+        """Get query for service usage by patient"""
+        return self.build_query(
+            bi_queries.QUERY_SERVICE_USAGE_BY_PATIENT,
+            start_date=start_date,
+            end_date=end_date,
+            tenant_id=tenant_id,
+            limit=limit
+        )
+    
+    # ========================================================================
+    # WEEKLY SUMMARY QUERIES
+    # ========================================================================
+    
+    def get_weekly_summary(
+        self,
+        tenant_id: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None
+    ) -> str:
+        """Get query for weekly summary"""
+        return self.build_query(
+            bi_queries.QUERY_WEEKLY_SUMMARY,
+            start_date=start_date,
+            end_date=end_date,
+            tenant_id=tenant_id
+        )
+    
+    def get_weekly_summary_by_tenant(
+        self,
+        tenant_id: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None
+    ) -> str:
+        """Get query for weekly summary broken down by tenant"""
+        return self.build_query(
+            bi_queries.QUERY_WEEKLY_SUMMARY_BY_TENANT,
+            start_date=start_date,
+            end_date=end_date,
+            tenant_id=tenant_id
+        )
+    
+    # ========================================================================
+    # ADOPTION ANALYTICS QUERIES
+    # ========================================================================
+    
+    def get_daily_active_users(
+        self,
+        tenant_id: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None
+    ) -> str:
+        """Get query for daily active users"""
+        return self.build_query(
+            bi_queries.QUERY_DAILY_ACTIVE_USERS,
+            start_date=start_date,
+            end_date=end_date,
+            tenant_id=tenant_id
+        )
+    
+    def get_monthly_active_users(
+        self,
+        tenant_id: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None
+    ) -> str:
+        """Get query for monthly active users"""
+        return self.build_query(
+            bi_queries.QUERY_MONTHLY_ACTIVE_USERS,
+            start_date=start_date,
+            end_date=end_date,
+            tenant_id=tenant_id
+        )
+    
+    def get_growth_metrics(
+        self,
+        tenant_id: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None
+    ) -> str:
+        """Get query for growth metrics by month"""
+        return self.build_query(
+            bi_queries.QUERY_GROWTH_METRICS,
+            start_date=start_date,
+            end_date=end_date,
+            tenant_id=tenant_id
+        )
+    
+    # ========================================================================
+    # NOTE FORMAT & EVENT ANALYTICS
+    # ========================================================================
+    
     def get_note_format_usage(
         self,
-        tenant_id: str,
+        tenant_id: str | None = None,
         start_date: str | None = None,
         end_date: str | None = None
     ) -> str:
         """Get query for note format usage analytics"""
         return self.build_query(
             bi_queries.QUERY_NOTE_FORMAT_USAGE,
+            start_date=start_date,
+            end_date=end_date,
+            tenant_id=tenant_id
+        )
+    
+    def get_events_by_type(
+        self,
+        tenant_id: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None
+    ) -> str:
+        """Get query for events grouped by type"""
+        return self.build_query(
+            bi_queries.QUERY_EVENTS_BY_TYPE,
             start_date=start_date,
             end_date=end_date,
             tenant_id=tenant_id

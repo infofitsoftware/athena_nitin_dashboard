@@ -36,9 +36,11 @@ class QueryService:
         
         query_upper = query.upper().strip()
         
-        # Check for dangerous keywords
+        # Check for dangerous keywords (word boundary match to avoid false positives
+        # e.g., "lastupdated_datetime" should not match "UPDATE")
         for dangerous in cls.DANGEROUS_KEYWORDS:
-            if dangerous in query_upper:
+            pattern = r'\b' + dangerous + r'\b'
+            if re.search(pattern, query_upper):
                 return False, f"Query contains forbidden keyword: {dangerous}"
         
         # Basic SQL injection prevention - check for suspicious patterns

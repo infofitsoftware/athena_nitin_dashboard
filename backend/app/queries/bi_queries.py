@@ -3,6 +3,10 @@ BI Queries for Clinical Audit Dashboard
 
 This file contains all the SQL queries used for business intelligence and analytics.
 Each query is designed to answer specific business questions about clinical documentation usage.
+
+Queries using {tenant_filter} support optional tenant filtering:
+- When tenant_id is provided: filters to that specific tenant
+- When tenant_id is omitted: shows data across all tenants
 """
 
 # ============================================================================
@@ -59,7 +63,7 @@ SELECT
     tenant_id,
     user_id,
     COUNT(DISTINCT care_record_id) as session_count,
-    SUM(audio_duration) as total_audio_duration_seconds
+    SUM(CAST(audio_duration AS double)) as total_audio_duration_seconds
 FROM {table_name}
 WHERE creation_datetime >= TIMESTAMP '{start_date} 00:00:00'
     AND creation_datetime <= TIMESTAMP '{end_date} 23:59:59'
@@ -131,45 +135,49 @@ SELECT
     COUNT(DISTINCT care_record_id) as total_sessions,
     COUNT(DISTINCT patient_id) as unique_patients,
     COUNT(DISTINCT user_id) as active_practitioners,
-    SUM(audio_duration) as total_audio_duration_seconds,
-    AVG(audio_duration) as avg_audio_duration_seconds
+    SUM(CAST(audio_duration AS double)) as total_audio_duration_seconds,
+    AVG(CAST(audio_duration AS double)) as avg_audio_duration_seconds
 FROM {table_name}
 WHERE creation_datetime >= TIMESTAMP '{start_date} 00:00:00'
     AND creation_datetime <= TIMESTAMP '{end_date} 23:59:59'
-    AND tenant_id = '{tenant_id}'
+    {tenant_filter}
 GROUP BY tenant_id
+ORDER BY total_sessions DESC
 """
 
 QUERY_SERVICE_USAGE_BY_PRACTITIONER = """
 SELECT 
+    tenant_id,
     user_id,
     COUNT(DISTINCT care_record_id) as session_count,
     COUNT(DISTINCT patient_id) as patient_count,
-    SUM(audio_duration) as total_audio_duration_seconds,
-    AVG(audio_duration) as avg_audio_duration_seconds,
+    SUM(CAST(audio_duration AS double)) as total_audio_duration_seconds,
+    AVG(CAST(audio_duration AS double)) as avg_audio_duration_seconds,
     MIN(creation_datetime) as first_session,
     MAX(creation_datetime) as last_session
 FROM {table_name}
 WHERE creation_datetime >= TIMESTAMP '{start_date} 00:00:00'
     AND creation_datetime <= TIMESTAMP '{end_date} 23:59:59'
-    AND tenant_id = '{tenant_id}'
-GROUP BY user_id
+    {tenant_filter}
+GROUP BY tenant_id, user_id
 ORDER BY session_count DESC
+LIMIT {limit}
 """
 
 QUERY_SERVICE_USAGE_BY_PATIENT = """
 SELECT 
     patient_id,
     patient_name,
+    tenant_id,
     COUNT(DISTINCT care_record_id) as visit_count,
     COUNT(DISTINCT user_id) as practitioner_count,
-    SUM(audio_duration) as total_audio_duration_seconds,
+    SUM(CAST(audio_duration AS double)) as total_audio_duration_seconds,
     MAX(creation_datetime) as last_visit
 FROM {table_name}
 WHERE creation_datetime >= TIMESTAMP '{start_date} 00:00:00'
     AND creation_datetime <= TIMESTAMP '{end_date} 23:59:59'
-    AND tenant_id = '{tenant_id}'
-GROUP BY patient_id, patient_name
+    {tenant_filter}
+GROUP BY patient_id, patient_name, tenant_id
 ORDER BY visit_count DESC
 LIMIT {limit}
 """
@@ -195,9 +203,9 @@ SELECT
 FROM {table_name}
 WHERE creation_datetime >= TIMESTAMP '{start_date} 00:00:00'
     AND creation_datetime <= TIMESTAMP '{end_date} 23:59:59'
-    AND tenant_id = '{tenant_id}'
+    {tenant_filter}
     AND status IN ('COMPLETED', 'UNSIGNED')
-    AND (submitted_datetime IS NULL OR submitted_datetime = '')
+    AND submitted_datetime IS NULL
 ORDER BY completed_datetime DESC
 LIMIT {limit}
 """
@@ -208,23 +216,25 @@ SELECT
 FROM {table_name}
 WHERE creation_datetime >= TIMESTAMP '{start_date} 00:00:00'
     AND creation_datetime <= TIMESTAMP '{end_date} 23:59:59'
-    AND tenant_id = '{tenant_id}'
+    {tenant_filter}
     AND status IN ('COMPLETED', 'UNSIGNED')
-    AND (submitted_datetime IS NULL OR submitted_datetime = '')
+    AND submitted_datetime IS NULL
 """
 
 QUERY_UNSIGNED_NOTES_BY_PRACTITIONER = """
 SELECT 
+    tenant_id,
     user_id,
     COUNT(DISTINCT care_record_id) as unsigned_count
 FROM {table_name}
 WHERE creation_datetime >= TIMESTAMP '{start_date} 00:00:00'
     AND creation_datetime <= TIMESTAMP '{end_date} 23:59:59'
-    AND tenant_id = '{tenant_id}'
+    {tenant_filter}
     AND status IN ('COMPLETED', 'UNSIGNED')
-    AND (submitted_datetime IS NULL OR submitted_datetime = '')
-GROUP BY user_id
+    AND submitted_datetime IS NULL
+GROUP BY tenant_id, user_id
 ORDER BY unsigned_count DESC
+LIMIT {limit}
 """
 
 # ============================================================================
@@ -234,18 +244,34 @@ ORDER BY unsigned_count DESC
 QUERY_WEEKLY_SUMMARY = """
 SELECT 
     DATE_TRUNC('week', DATE(creation_datetime)) as week_start,
+    COUNT(DISTINCT care_record_id) as session_count,
+    COUNT(DISTINCT user_id) as active_users,
+    COUNT(DISTINCT patient_id) as unique_patients,
+    COUNT(DISTINCT tenant_id) as active_tenants,
+    SUM(CAST(audio_duration AS double)) as total_audio_duration_seconds,
+    AVG(CAST(audio_duration AS double)) as avg_audio_duration_seconds
+FROM {table_name}
+WHERE creation_datetime >= TIMESTAMP '{start_date} 00:00:00'
+    AND creation_datetime <= TIMESTAMP '{end_date} 23:59:59'
+    {tenant_filter}
+GROUP BY DATE_TRUNC('week', DATE(creation_datetime))
+ORDER BY week_start DESC
+"""
+
+QUERY_WEEKLY_SUMMARY_BY_TENANT = """
+SELECT 
+    DATE_TRUNC('week', DATE(creation_datetime)) as week_start,
     tenant_id,
     COUNT(DISTINCT care_record_id) as session_count,
     COUNT(DISTINCT user_id) as active_users,
     COUNT(DISTINCT patient_id) as unique_patients,
-    SUM(audio_duration) as total_audio_duration_seconds,
-    AVG(audio_duration) as avg_audio_duration_seconds
+    SUM(CAST(audio_duration AS double)) as total_audio_duration_seconds
 FROM {table_name}
 WHERE creation_datetime >= TIMESTAMP '{start_date} 00:00:00'
     AND creation_datetime <= TIMESTAMP '{end_date} 23:59:59'
-    AND tenant_id = '{tenant_id}'
+    {tenant_filter}
 GROUP BY DATE_TRUNC('week', DATE(creation_datetime)), tenant_id
-ORDER BY week_start DESC
+ORDER BY week_start DESC, session_count DESC
 """
 
 QUERY_WEEK_OVER_WEEK_COMPARISON = """
@@ -289,11 +315,13 @@ CROSS JOIN previous_week pw
 QUERY_DAILY_ACTIVE_USERS = """
 SELECT 
     DATE(creation_datetime) as date,
-    COUNT(DISTINCT user_id) as dau
+    COUNT(DISTINCT user_id) as dau,
+    COUNT(DISTINCT care_record_id) as sessions,
+    COUNT(DISTINCT tenant_id) as tenants
 FROM {table_name}
 WHERE creation_datetime >= TIMESTAMP '{start_date} 00:00:00'
     AND creation_datetime <= TIMESTAMP '{end_date} 23:59:59'
-    AND tenant_id = '{tenant_id}'
+    {tenant_filter}
 GROUP BY DATE(creation_datetime)
 ORDER BY date ASC
 """
@@ -301,11 +329,13 @@ ORDER BY date ASC
 QUERY_MONTHLY_ACTIVE_USERS = """
 SELECT 
     DATE_TRUNC('month', DATE(creation_datetime)) as month,
-    COUNT(DISTINCT user_id) as mau
+    COUNT(DISTINCT user_id) as mau,
+    COUNT(DISTINCT care_record_id) as sessions,
+    COUNT(DISTINCT tenant_id) as tenants
 FROM {table_name}
 WHERE creation_datetime >= TIMESTAMP '{start_date} 00:00:00'
     AND creation_datetime <= TIMESTAMP '{end_date} 23:59:59'
-    AND tenant_id = '{tenant_id}'
+    {tenant_filter}
 GROUP BY DATE_TRUNC('month', DATE(creation_datetime))
 ORDER BY month ASC
 """
@@ -327,9 +357,9 @@ FROM (
             DATE_TRUNC('month', DATE(creation_datetime))
         ) as months_since_first
     FROM {table_name}
-    WHERE datehour >= '{start_date}'
-        AND datehour <= '{end_date}'
-        AND tenant_id = '{tenant_id}'
+    WHERE creation_datetime >= TIMESTAMP '{start_date} 00:00:00'
+        AND creation_datetime <= TIMESTAMP '{end_date} 23:59:59'
+        {tenant_filter}
     GROUP BY user_id, DATE(creation_datetime)
 )
 GROUP BY DATE_TRUNC('month', first_activity)
@@ -342,10 +372,12 @@ SELECT
     COUNT(DISTINCT care_record_id) as sessions,
     COUNT(DISTINCT user_id) as users,
     COUNT(DISTINCT patient_id) as patients,
-    COUNT(DISTINCT tenant_id) as tenants
+    COUNT(DISTINCT tenant_id) as tenants,
+    SUM(CAST(audio_duration AS double)) as total_audio_seconds
 FROM {table_name}
 WHERE creation_datetime >= TIMESTAMP '{start_date} 00:00:00'
     AND creation_datetime <= TIMESTAMP '{end_date} 23:59:59'
+    {tenant_filter}
 GROUP BY DATE_TRUNC('month', DATE(creation_datetime))
 ORDER BY month ASC
 """
@@ -362,7 +394,7 @@ SELECT
 FROM {table_name}
 WHERE creation_datetime >= TIMESTAMP '{start_date} 00:00:00'
     AND creation_datetime <= TIMESTAMP '{end_date} 23:59:59'
-    AND tenant_id = '{tenant_id}'
+    {tenant_filter}
 GROUP BY event_name
 ORDER BY event_count DESC
 """
@@ -395,11 +427,11 @@ SELECT
     note_format,
     COUNT(DISTINCT care_record_id) as usage_count,
     COUNT(DISTINCT user_id) as users_using_format,
-    AVG(audio_duration) as avg_audio_duration
+    AVG(CAST(audio_duration AS double)) as avg_audio_duration
 FROM {table_name}
 WHERE creation_datetime >= TIMESTAMP '{start_date} 00:00:00'
     AND creation_datetime <= TIMESTAMP '{end_date} 23:59:59'
-    AND tenant_id = '{tenant_id}'
+    {tenant_filter}
     AND note_format IS NOT NULL
 GROUP BY note_format
 ORDER BY usage_count DESC
@@ -412,14 +444,14 @@ ORDER BY usage_count DESC
 QUERY_AUDIO_DURATION_STATS = """
 SELECT 
     tenant_id,
-    AVG(audio_duration) as avg_duration_seconds,
-    MIN(audio_duration) as min_duration_seconds,
-    MAX(audio_duration) as max_duration_seconds,
-    PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY audio_duration) as median_duration_seconds
+    AVG(CAST(audio_duration AS double)) as avg_duration_seconds,
+    MIN(CAST(audio_duration AS double)) as min_duration_seconds,
+    MAX(CAST(audio_duration AS double)) as max_duration_seconds,
+    APPROX_PERCENTILE(CAST(audio_duration AS double), 0.5) as median_duration_seconds
 FROM {table_name}
 WHERE creation_datetime >= TIMESTAMP '{start_date} 00:00:00'
     AND creation_datetime <= TIMESTAMP '{end_date} 23:59:59'
-    AND tenant_id = '{tenant_id}'
+    {tenant_filter}
     AND audio_duration IS NOT NULL
 GROUP BY tenant_id
 """
@@ -427,19 +459,19 @@ GROUP BY tenant_id
 QUERY_AUDIO_DURATION_DISTRIBUTION = """
 SELECT 
     CASE 
-        WHEN audio_duration < 300 THEN '0-5 min'
-        WHEN audio_duration < 600 THEN '5-10 min'
-        WHEN audio_duration < 900 THEN '10-15 min'
-        WHEN audio_duration < 1800 THEN '15-30 min'
-        WHEN audio_duration < 3600 THEN '30-60 min'
+        WHEN CAST(audio_duration AS double) < 300 THEN '0-5 min'
+        WHEN CAST(audio_duration AS double) < 600 THEN '5-10 min'
+        WHEN CAST(audio_duration AS double) < 900 THEN '10-15 min'
+        WHEN CAST(audio_duration AS double) < 1800 THEN '15-30 min'
+        WHEN CAST(audio_duration AS double) < 3600 THEN '30-60 min'
         ELSE '60+ min'
     END as duration_bucket,
     COUNT(DISTINCT care_record_id) as session_count
 FROM {table_name}
 WHERE creation_datetime >= TIMESTAMP '{start_date} 00:00:00'
     AND creation_datetime <= TIMESTAMP '{end_date} 23:59:59'
-    AND tenant_id = '{tenant_id}'
+    {tenant_filter}
     AND audio_duration IS NOT NULL
-GROUP BY duration_bucket
-ORDER BY MIN(audio_duration)
+GROUP BY 1
+ORDER BY MIN(CAST(audio_duration AS double))
 """

@@ -8,6 +8,10 @@ import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import AuditTrailPage from './pages/AuditTrailPage';
+import UnsignedNotesPage from './pages/UnsignedNotesPage';
+import ServiceUsagePage from './pages/ServiceUsagePage';
+import WeeklySummaryPage from './pages/WeeklySummaryPage';
+import AdoptionAnalyticsPage from './pages/AdoptionAnalyticsPage';
 import NotFoundPage from './pages/NotFoundPage';
 
 /**
@@ -43,6 +47,38 @@ function App() {
               element={
                 <ProtectedRoute>
                   <AuditTrailPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/unsigned-notes"
+              element={
+                <ProtectedRoute>
+                  <UnsignedNotesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/service-usage"
+              element={
+                <ProtectedRoute>
+                  <ServiceUsagePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/weekly-summary"
+              element={
+                <ProtectedRoute>
+                  <WeeklySummaryPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/adoption-analytics"
+              element={
+                <ProtectedRoute>
+                  <AdoptionAnalyticsPage />
                 </ProtectedRoute>
               }
             />
