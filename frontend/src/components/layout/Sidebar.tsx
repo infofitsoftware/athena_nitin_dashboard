@@ -1,8 +1,7 @@
 import { Box, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Dashboard, Analytics, Settings } from '@mui/icons-material';
+import { Dashboard, Analytics, History, NoteAdd, Assessment, TrendingUp, Settings } from '@mui/icons-material';
 import { useAuthStore } from '../../store/authStore';
-import { useAuth } from '../../features/auth/hooks/useAuth';
 
 const drawerWidth = 240;
 
@@ -19,12 +18,14 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuthStore();
-  const { logout } = useAuth();
 
   const menuItems = [
     { text: 'Dashboard', icon: <Dashboard />, path: '/dashboard' },
+    { text: 'Audit Trail', icon: <History />, path: '/audit-trail' },
+    { text: 'Unsigned Notes', icon: <NoteAdd />, path: '/unsigned-notes' },
+    { text: 'Service Usage', icon: <Assessment />, path: '/service-usage' },
+    { text: 'Weekly Summary', icon: <TrendingUp />, path: '/weekly-summary' },
     { text: 'Query Analytics', icon: <Analytics />, path: '/analytics' },
-    { text: 'Settings', icon: <Settings />, path: '/settings' },
   ];
 
   const handleNavigation = (path: string) => {

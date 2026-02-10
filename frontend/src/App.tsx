@@ -7,6 +7,7 @@ import ProtectedRoute from './components/common/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import AnalyticsPage from './pages/AnalyticsPage';
+import AuditTrailPage from './pages/AuditTrailPage';
 import NotFoundPage from './pages/NotFoundPage';
 
 /**
@@ -34,6 +35,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <AnalyticsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/audit-trail"
+              element={
+                <ProtectedRoute>
+                  <AuditTrailPage />
                 </ProtectedRoute>
               }
             />

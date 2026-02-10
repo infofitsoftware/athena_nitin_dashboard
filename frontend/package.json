@@ -26,7 +26,9 @@
     "axios": "^1.7.7",
     "react-hook-form": "^7.53.0",
     "zod": "^3.23.8",
-    "@hookform/resolvers": "^3.9.0"
+    "@hookform/resolvers": "^3.9.0",
+    "@mui/x-date-pickers": "^7.19.0",
+    "date-fns": "^2.30.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

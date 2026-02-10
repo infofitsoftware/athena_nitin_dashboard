@@ -56,31 +56,22 @@ export default function Header({ onMenuClick }: HeaderProps) {
         </IconButton>
 
         <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 600 }}>
-          Athena Dashboard
+          Clinical Audit Dashboard
         </Typography>
-
-        {/* Desktop Navigation */}
-        <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1, mr: 2 }}>
-          <Button
-            color="inherit"
-            onClick={() => navigate('/dashboard')}
-            sx={{ textTransform: 'none' }}
-          >
-            Dashboard
-          </Button>
-          <Button
-            color="inherit"
-            onClick={() => navigate('/analytics')}
-            sx={{ textTransform: 'none' }}
-          >
-            Query Analytics
-          </Button>
-        </Box>
 
         {/* User Menu */}
         {user && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Chip label={user.role} size="small" color="primary" />
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<Logout />}
+              onClick={handleLogout}
+              sx={{ textTransform: 'none', display: { xs: 'none', sm: 'flex' } }}
+            >
+              Logout
+            </Button>
             <IconButton
               size="large"
               edge="end"
@@ -106,7 +97,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
                   {user.email}
                 </Typography>
               </MenuItem>
-              <MenuItem onClick={handleLogout}>
+              <MenuItem onClick={handleLogout} sx={{ display: { sm: 'none' } }}>
                 <Logout sx={{ mr: 1 }} fontSize="small" />
                 Logout
               </MenuItem>
