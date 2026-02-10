@@ -4,22 +4,35 @@ FastAPI backend for the Athena BI Dashboard.
 
 ## Setup
 
-1. **Install dependencies:**
+1. **Create and activate virtual environment:**
    ```bash
-   poetry install
-   # or
-   pip install -r requirements.txt
+   python -m venv venv
+   
+   # Windows
+   venv\Scripts\activate
+   
+   # Linux/Mac
+   source venv/bin/activate
    ```
 
-2. **Create `.env` file:**
+2. **Install dependencies:**
    ```bash
-   cp .env.example .env
+   # Production dependencies only
+   pip install -r requirements.txt
+   
+   # Or with dev dependencies
+   pip install -r requirements-dev.txt
+   ```
+
+3. **Create `.env` file:**
+   ```bash
+   # Copy the example file (if exists) or create manually
    # Edit .env with your AWS credentials
    ```
 
-3. **Run the server:**
+4. **Run the server:**
    ```bash
-   poetry run uvicorn app.main:app --reload
+   uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
    ```
 
    Or use the convenience script:
@@ -40,7 +53,7 @@ If you get an "access denied" error:
 
 1. **Try a different port:**
    ```bash
-   poetry run uvicorn app.main:app --reload --port 8001
+   uvicorn app.main:app --reload --port 8001
    ```
 
 2. **Check if port is in use:**
