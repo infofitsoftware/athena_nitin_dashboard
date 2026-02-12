@@ -18,6 +18,9 @@ import { useAuthStore } from '../store/authStore';
 import { useAuth } from '../features/auth/hooks/useAuth';
 import { biApi } from '../api/bi';
 import type { BIQueryResponse } from '../api/bi';
+import MetricCard from '../components/cards/MetricCard';
+import StatusDistributionChart from '../components/charts/StatusDistributionChart';
+import TopTenantsChart from '../components/charts/TopTenantsChart';
 
 /**
  * Clinical Audit Dashboard - Overview Page
@@ -35,6 +38,7 @@ export default function DashboardPage() {
     total_users: number;
   } | null>(null);
   const [sessionsByStatus, setSessionsByStatus] = useState<any[]>([]);
+  const [topTenants, setTopTenants] = useState<any[]>([]);
 
   useEffect(() => {
     loadDashboardData();
@@ -64,6 +68,18 @@ export default function DashboardPage() {
       });
 
       setSessionsByStatus(statusResult.results || []);
+      console.log('Sessions by status:', statusResult.results);
+
+      // Get top tenants
+      const tenantsResult = await biApi.executeQuery({
+        query_type: 'service_usage_tenant',
+        start_date: getDateRange(30).start,
+        end_date: getDateRange(30).end,
+        limit: 10,
+      });
+
+      setTopTenants(tenantsResult.results || []);
+      console.log('Top tenants:', tenantsResult.results);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to load dashboard data';
       setError(message);
@@ -129,103 +145,56 @@ export default function DashboardPage() {
           {/* KPI Cards */}
           <Grid container spacing={3} sx={{ mb: 3 }}>
             <Grid item xs={12} sm={6} md={4}>
-              <Card elevation={2}>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <Analytics color="primary" sx={{ mr: 1 }} />
-                    <Typography variant="body2" color="text.secondary">
-                      Total Sessions
-                    </Typography>
-                  </Box>
-                  <Typography variant="h4" sx={{ fontWeight: 600 }}>
-                    {metrics?.total_sessions?.toLocaleString() || '0'}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Last 30 days
-                  </Typography>
-                </CardContent>
-              </Card>
+              <MetricCard
+                label="Total Sessions"
+                value={metrics?.total_sessions || 0}
+                subtext="Last 30 days"
+                color="primary"
+                helper="Total transcription sessions completed in the selected period"
+              />
             </Grid>
 
             <Grid item xs={12} sm={6} md={4}>
-              <Card elevation={2}>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <Business color="primary" sx={{ mr: 1 }} />
-                    <Typography variant="body2" color="text.secondary">
-                      Active Tenants
-                    </Typography>
-                  </Box>
-                  <Typography variant="h4" sx={{ fontWeight: 600 }}>
-                    {metrics?.total_tenants?.toLocaleString() || '0'}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Healthcare organizations
-                  </Typography>
-                </CardContent>
-              </Card>
+              <MetricCard
+                label="Active Tenants"
+                value={metrics?.total_tenants || 0}
+                subtext="Healthcare organizations"
+                color="secondary"
+                helper="Count of distinct tenant organizations with recorded activity"
+              />
             </Grid>
 
             <Grid item xs={12} sm={6} md={4}>
-              <Card elevation={2}>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <People color="primary" sx={{ mr: 1 }} />
-                    <Typography variant="body2" color="text.secondary">
-                      Active Practitioners
-                    </Typography>
-                  </Box>
-                  <Typography variant="h4" sx={{ fontWeight: 600 }}>
-                    {metrics?.total_users?.toLocaleString() || '0'}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Users in system
-                  </Typography>
-                </CardContent>
-              </Card>
+              <MetricCard
+                label="Active Practitioners"
+                value={metrics?.total_users || 0}
+                subtext="Users in system"
+                color="info"
+                helper="Total unique practitioners who have used the system"
+              />
             </Grid>
           </Grid>
 
-          {/* Sessions by Status */}
+          {/* Charts */}
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
-              <Paper sx={{ p: 3 }}>
-                <Typography variant="h6" gutterBottom>
-                  Sessions by Status
-                </Typography>
-                {sessionsByStatus.length > 0 ? (
-                  <Box sx={{ mt: 2 }}>
-                    {sessionsByStatus.map((item, index) => (
-                      <Box
-                        key={index}
-                        sx={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          py: 1.5,
-                          borderBottom: index < sessionsByStatus.length - 1 ? 1 : 0,
-                          borderColor: 'divider',
-                        }}
-                      >
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Chip
-                            label={item.status || 'Unknown'}
-                            color={getStatusColor(item.status) as any}
-                            size="small"
-                          />
-                        </Box>
-                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                          {item.session_count?.toLocaleString() || 0}
-                        </Typography>
-                      </Box>
-                    ))}
-                  </Box>
-                ) : (
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-                    No data available
-                  </Typography>
-                )}
-              </Paper>
+              <StatusDistributionChart
+                data={sessionsByStatus.map((item) => ({
+                  status: item.status || 'Unknown',
+                  count: item.session_count || 0,
+                }))}
+                title="Sessions by Status"
+                subtitle="Distribution of workflow statuses"
+              />
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <TopTenantsChart
+                data={topTenants}
+                title="Top Tenants"
+                subtitle="Ranked by total sessions"
+                limit={10}
+              />
             </Grid>
 
             <Grid item xs={12} md={6}>

@@ -9,19 +9,25 @@ import {
   TablePagination,
   Box,
   Typography,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
+import { Download } from '@mui/icons-material';
 import { useState } from 'react';
+import { exportToCSV } from '../../utils/exportUtils';
 
 interface DataTableProps {
   data: Record<string, any>[];
   columns?: string[];
+  title?: string;
+  exportFilename?: string;
 }
 
 /**
  * Data table component for displaying query results
  * Follows UI/UX design plan: sortable, paginated, professional styling
  */
-export default function DataTable({ data, columns }: DataTableProps) {
+export default function DataTable({ data, columns, title, exportFilename }: DataTableProps) {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
 
@@ -37,6 +43,14 @@ export default function DataTable({ data, columns }: DataTableProps) {
     setPage(0);
   };
 
+  const handleExport = () => {
+    const filename = exportFilename || `${title || 'data'}_${new Date().toISOString().split('T')[0]}.csv`;
+    exportToCSV(data, {
+      filename,
+      headers: tableColumns,
+    });
+  };
+
   // Paginate data
   const paginatedData = data.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
@@ -49,8 +63,25 @@ export default function DataTable({ data, columns }: DataTableProps) {
   }
 
   return (
-    <TableContainer component={Paper} sx={{ maxHeight: 'calc(100vh - 300px)' }}>
-      <Table stickyHeader size="small" sx={{ minWidth: 650 }}>
+    <Box>
+      {(title || data.length > 0) && (
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          {title && (
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              {title}
+            </Typography>
+          )}
+          {data.length > 0 && (
+            <Tooltip title="Export to CSV">
+              <IconButton onClick={handleExport} size="small" color="primary">
+                <Download />
+              </IconButton>
+            </Tooltip>
+          )}
+        </Box>
+      )}
+      <TableContainer component={Paper} sx={{ maxHeight: 'calc(100vh - 300px)' }}>
+        <Table stickyHeader size="small" sx={{ minWidth: 650 }}>
         <TableHead>
           <TableRow>
             {tableColumns.map((column) => (
@@ -102,6 +133,7 @@ export default function DataTable({ data, columns }: DataTableProps) {
         rowsPerPageOptions={[10, 25, 50, 100]}
         labelRowsPerPage="Rows per page:"
       />
-    </TableContainer>
+      </TableContainer>
+    </Box>
   );
 }

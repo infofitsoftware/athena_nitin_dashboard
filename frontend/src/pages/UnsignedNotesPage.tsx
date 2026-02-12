@@ -28,6 +28,9 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { biApi } from '../api/bi';
 import type { BIQueryResponse } from '../api/bi';
 import DataTable from '../components/tables/DataTable';
+import UnsignedNotesAgingChart from '../components/charts/UnsignedNotesAgingChart';
+import MetricCard from '../components/cards/MetricCard';
+import FilterIndicator from '../components/filters/FilterIndicator';
 
 /**
  * Unsigned Notes Page
@@ -124,6 +127,32 @@ export default function UnsignedNotesPage() {
           Regular monitoring helps ensure timely completion of clinical documentation.
         </Alert>
 
+        {/* Filter Indicator */}
+        {(startDate || endDate || tenantId) && (
+          <FilterIndicator
+            dateRange={
+              startDate && endDate
+                ? {
+                    start: startDate.toISOString().split('T')[0],
+                    end: endDate.toISOString().split('T')[0],
+                  }
+                : null
+            }
+            tenantId={tenantId || null}
+            recordCount={results?.row_count || null}
+            onClearFilter={(type) => {
+              if (type === 'date') {
+                setStartDate(new Date(new Date().setDate(new Date().getDate() - 30)));
+                setEndDate(new Date());
+              } else if (type === 'tenant') {
+                setTenantId('');
+              } else if (type === 'all') {
+                handleClear();
+              }
+            }}
+          />
+        )}
+
         {/* Filters */}
         <Paper sx={{ p: 3, mb: 3 }}>
           <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
@@ -211,60 +240,52 @@ export default function UnsignedNotesPage() {
         {countData !== null && (
           <Grid container spacing={3} sx={{ mb: 3 }}>
             <Grid item xs={12} sm={6} md={4}>
-              <Card elevation={2} sx={{ borderLeft: 4, borderColor: 'error.main' }}>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <NoteAdd color="error" sx={{ mr: 1 }} />
-                    <Typography variant="body2" color="text.secondary">
-                      Total Unsigned Notes
-                    </Typography>
-                  </Box>
-                  <Typography variant="h3" sx={{ fontWeight: 700, color: 'error.main' }}>
-                    {countData.toLocaleString()}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Awaiting signature
-                  </Typography>
-                </CardContent>
-              </Card>
+              <MetricCard
+                label="Total Unsigned Notes"
+                value={countData}
+                subtext="Awaiting signature"
+                color="error"
+                borderColor="#e74c3c"
+                helper="Total number of notes that have not been signed by practitioners"
+              />
             </Grid>
 
             <Grid item xs={12} sm={6} md={4}>
-              <Card elevation={2} sx={{ borderLeft: 4, borderColor: 'warning.main' }}>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <Person color="warning" sx={{ mr: 1 }} />
-                    <Typography variant="body2" color="text.secondary">
-                      Practitioners with Unsigned Notes
-                    </Typography>
-                  </Box>
-                  <Typography variant="h3" sx={{ fontWeight: 700, color: 'warning.main' }}>
-                    {practitionerData?.row_count?.toLocaleString() || '0'}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Unique practitioners
-                  </Typography>
-                </CardContent>
-              </Card>
+              <MetricCard
+                label="Practitioners with Unsigned Notes"
+                value={practitionerData?.row_count || 0}
+                subtext="Unique practitioners"
+                color="warning"
+                borderColor="#f39c12"
+                helper="Number of distinct practitioners who have unsigned notes"
+              />
             </Grid>
 
             <Grid item xs={12} sm={6} md={4}>
-              <Card elevation={2} sx={{ borderLeft: 4, borderColor: 'info.main' }}>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <Warning color="info" sx={{ mr: 1 }} />
-                    <Typography variant="body2" color="text.secondary">
-                      Records Found
-                    </Typography>
-                  </Box>
-                  <Typography variant="h3" sx={{ fontWeight: 700, color: 'info.main' }}>
-                    {results?.row_count?.toLocaleString() || '0'}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Matching filters
-                  </Typography>
-                </CardContent>
-              </Card>
+              <MetricCard
+                label="Records Found"
+                value={results?.row_count || 0}
+                subtext="Matching filters"
+                color="info"
+                borderColor="#3498db"
+                helper="Total number of unsigned note records matching the selected filters"
+              />
+            </Grid>
+          </Grid>
+        )}
+
+        {/* Aging Chart */}
+        {results && results.results && results.results.length > 0 && (
+          <Grid container spacing={3} sx={{ mb: 3 }}>
+            <Grid item xs={12}>
+              <UnsignedNotesAgingChart
+                data={results.results.map((note) => ({
+                  days_pending: note.days_pending || note.daysPending || 0,
+                  ...note,
+                }))}
+                title="Unsigned Notes Aging Distribution"
+                subtitle={`${results.results.length} total unsigned notes`}
+              />
             </Grid>
           </Grid>
         )}
@@ -330,7 +351,12 @@ export default function UnsignedNotesPage() {
             </Box>
 
             {results.results && results.results.length > 0 ? (
-              <DataTable data={results.results} columns={results.columns} />
+              <DataTable
+                data={results.results}
+                columns={results.columns}
+                title="Unsigned Notes Detail"
+                exportFilename="unsigned_notes"
+              />
             ) : (
               <Box sx={{ p: 4, textAlign: 'center' }}>
                 <NoteAdd sx={{ fontSize: 48, color: 'success.main', mb: 1 }} />
